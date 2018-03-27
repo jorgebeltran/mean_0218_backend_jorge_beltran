@@ -23,7 +23,11 @@ var userSchema = mongoose.Schema({
   deleted: {
     type: Boolean,
     default: false
-  }
+  },
+  comments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment'
+}]
 });
 
 userSchema.methods.getDtoArticle = function () {

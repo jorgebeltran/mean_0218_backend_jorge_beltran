@@ -55,6 +55,30 @@ router.get('/', function (request, response) {
   });
 });
 
+
+router.get('/list', function (request, response) {
+  console.log('headers-->', request.headers);
+  userModel.find({
+    deleted: false
+  }, {
+    password: 0,
+    deleted: 0,
+    __v: 0
+  }, null, function (err, userList) {
+    if (err) {
+      return response.status(500).send({
+        message: 'Thera was a problem retrieving the user list',
+        error: err
+      });
+    } else {
+      response.send({
+        message: 'The userlist has been retrieved',
+        data: userList
+      });
+    }
+  });
+});
+
 router.post('/', function (request, response) {
   var newUser = new userModel(request.body);
   if (request.body.password) {
@@ -151,10 +175,10 @@ router.get('/seed', function (request, response) {
     var array = [];
     var hashedPassword = bcrypt.hashSync('1234567', secretkeys.salts);
     array.push({
-      name: 'Angel',
-      lastname: 'Antezana',
-      username: 'anghel7',
-      email: 'anghel@gmail.com',
+      name: 'jorge',
+      lastname: 'beltran',
+      username: 'jorge123',
+      email: 'jorge@gmail.com',
       password: hashedPassword,
       avatar: 'https://pbs.twimg.com/profile_images/743853773429276672/_cLiC9TB_400x400.jpg',
       type: 'ADM'
