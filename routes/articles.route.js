@@ -2,39 +2,60 @@ var express = require('express');
 var router = express.Router();
 var articleModel = require('../models/article.model');
 var userModel = require('../models/user.model');
+var commentModel = require('../models/comment.model');
 
-var selectUserPopulated = {
-  path: 'author',
-  select: '-_id -username -avatar -type -deleted -password -__v'
-};
+
+var selectUserPopulated = { path: 'author', select: '-type -deleted -__v' };
+var selectCommentPopulated = { path: 'comments', select: ' -__v', populate: { path: 'author', select: ' -type -deleted -__v' } };
+var selectUserFiels = { deleted: 0, __v: 0 };
 
 router.get('/', function (request, response) {
-  articleModel.find({
-    deleted: false
-  }, {
-    deleted: 0,
-    __v: 0
-  }, null, function (err, articleList) {
-    if (err) {
+  articleModel.find({ deleted: false }, selectUserFiels, null, function (err, articleList) {
+    if (err)
       return response.status(500).send({
-        message: 'there was a problem retrieving the article list',
+        message: 'there was a problem retrieving the articles list',
         error: err
       });
-    } else {
-      userModel.populate(articleList, selectUserPopulated, function (errPopulating, populatedArticleList) {
-        if (errPopulating)
-          return response.status(500).send({
-            message: 'there was a problem retrieving the articles list',
-            error: errPopulating
-          });
-        response.send({
-          message: 'The articleList has been retrieved',
-          data: populatedArticleList
+  }).populate(selectUserPopulated)
+    .populate(selectCommentPopulated)
+    .exec(function (errPopulating, populatedArticleList) {
+      if (errPopulating)
+        return response.status(500).send({
+          error: errPopulating
         });
+      response.send({
+        message: 'The article list has been retrieved',
+        data: populatedArticleList
       });
-    }
-  });
-});
+    })
+
+})
+
+
+/*  var select = { deleted: 0, __v: 0 };
+ 
+ router.get('/', function (request, response) {
+     articleModel.find({ deleted: false }, select, null,function (err, articleList) {
+             if (err)
+                 return response.status(500).send({
+                     message: 'there was a problem retrieving the articles list',
+                     error: err
+                 });
+         }).populate({ path: 'author', select: ' -type -deleted -__v' })
+        .populate({ path: 'comments', select: ' -__v' })
+        .populate({ path: 'comments', select: ' -__v', populate: { path: 'author', select: ' -type -deleted -__v' } })
+         .exec(function (errPopulating, populatedArticleList) {
+             if (errPopulating)
+                 return response.status(500).send({
+                     error: errPopulating
+                 });
+             response.send({
+                message: 'The article has been retrieved',
+                message: 'The article list has been retrieved',
+                 data: populatedArticleList
+             });
+         })
+ */
 
 router.post('/', function (request, response) {
   var newArticle = new articleModel(request.body);
@@ -135,31 +156,32 @@ router.get('/:id', function (request, response) {
     _id: request.params.id,
     deleted: false
   }, {
-    __v: 0,
-    deleted: 0
-  }, null, function (err, articleFound) {
-    if (err)
-      return response.status(500).send({
-        message: 'There was a problem to find the article, server error',
-        error: err
-      });
-    if (!articleFound)
-      return response.status(404).send({
-        message: 'There was a problem to find the article, invalid id',
-        error: ''
-      });
-    userModel.populate(articleFound, selectUserPopulated, function (errPopulating, populatedArticle) {
-      if (errPopulating)
+      __v: 0,
+      deleted: 0
+    }, null, function (err, articleFound) {
+      if (err)
         return response.status(500).send({
-          message: 'There was a problem retrieving the article',
-          error: errPopulating
+          message: 'There was a problem to find the article, server error',
+          error: err
+        })
+      if (!articleFound)
+        return response.status(404).send({
+          message: 'There was a problem to find the article, invalid id',
+          error: ''
         });
-      response.send({
-        message: 'article retrieved',
-        data: populatedArticle.getDtoArticle()
-      });
-    });
-  });
-});
+      }).populate(selectUserPopulated)
+      .populate(selectCommentPopulated)
+      .exec(function (errPopulating, populatedArticleList) {
+        if (errPopulating)
+          return response.status(500).send({
+            error: errPopulating
+          });
+        response.send({
+          message: 'The article list has been retrieved',
+          data: populatedArticleList
+        });
+      })
+  
+  })
 
 module.exports = router;

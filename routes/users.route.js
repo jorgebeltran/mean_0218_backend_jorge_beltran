@@ -57,7 +57,7 @@ router.get('/', function (request, response) {
 
 
 router.get('/list', function (request, response) {
-  console.log('headers-->', request.headers);
+  //console.log('headers-->', request.headers);
   userModel.find({
     deleted: false
   }, {
